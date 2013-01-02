@@ -21,7 +21,7 @@ public class AccountOptionsPanel extends PanelWithTitle implements ActionListene
 
         super("Account Options");
 
-		panel.setLayout(new GridLayout(5, 5, 10, 10));
+		panel.setLayout(new GridLayout(3, 5, 10, 10));
 
         //row 1
         panel.add(new JPanel());
@@ -33,26 +33,11 @@ public class AccountOptionsPanel extends PanelWithTitle implements ActionListene
         //row 2
         panel.add(new JPanel());
         panel.add(accountHistoryButton);
-        panel.add(new JPanel());
+        panel.add(makePurchaseButton);
         panel.add(addMoneyButton);
         panel.add(new JPanel());
 
         //row 3
-        panel.add(new JPanel());
-        panel.add(new JPanel());
-        panel.add(makePurchaseButton);
-        panel.add(new JPanel());
-        panel.add(new JPanel());
-
-
-        //row 4
-        panel.add(new JPanel());
-        panel.add(new JPanel());
-        panel.add(new JPanel());
-        panel.add(new JPanel());
-        panel.add(new JPanel());
-
-        //row 5
         panel.add(new JPanel());
         panel.add(new JPanel());
         panel.add(new JPanel());

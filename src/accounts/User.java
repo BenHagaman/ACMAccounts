@@ -1,7 +1,11 @@
 package accounts;
 
+import test.TestObjects;
 import vending.Money;
 import vending.Product;
+import vending.Transaction;
+
+import java.util.Date;
 
 public class User {
 
@@ -20,6 +24,17 @@ public class User {
 
 		balance.subtract(product.getPrice());
 		System.out.println(balance.toString());
+
+
+
+        Transaction trans = new Transaction();
+
+        trans.setPname(product.getName());
+        trans.setAmount(product.getPrice().toBigDecimal().doubleValue());
+        trans.setDate("1/2/2013");
+        trans.setAcctBalance(balance.toBigDecimal().doubleValue());
+
+        TestObjects.getTransactionList().add(0, trans);
 	}
 
     public void addMoney(Money amount) {
@@ -29,6 +44,15 @@ public class User {
 
         balance.add(amount);
         System.out.println(balance.toString());
+
+        Transaction trans = new Transaction();
+
+        trans.setPname("Add Money");
+        trans.setAmount(amount.toBigDecimal().doubleValue());
+        trans.setDate("1/2/2013");
+        trans.setAcctBalance(balance.toBigDecimal().doubleValue());
+
+        TestObjects.getTransactionList().add(0, trans);
     }
 	
 	public Money getBalance() {
