@@ -7,11 +7,14 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
+import db.JDBCConnection;
 import vending.Controller;
 import vending.Money;
 import vending.Product;
@@ -38,15 +41,39 @@ public class ProductViewingPanel extends NavigablePanel implements ActionListene
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                new CustomProductPopup().promptUserForInfo();
-
+                Product p = new CustomProductPopup().promptUserForInfo();
+                System.out.println("HERE");
+                System.out.println(p.getName());
+                System.out.println(p.getPrice());
+                JDBCConnection conn = new JDBCConnection();
             }
         };
 
         allProducts.add(otherProductPanel);
 
-		
-		Product mtnDew = new Product();
+        ResultSet products = new JDBCConnection().execute("Select * FROM products;");
+        ArrayList<Product> productList = new ArrayList<Product>();
+
+        try {
+            while(products.next()) {
+                Product p = new Product();
+                p.setName(products.getString("name"));
+                p.setPrice(new Money(products.getDouble("price")));
+                p.setInStock(products.getBoolean("in_stock"));
+                p.setImagePath(products.getString("image_path"));
+
+                productList.add(p);
+            }
+        } catch (SQLException e) {
+            System.out.println("ERROR RETRIEVING PRODUCTS");
+        }
+
+
+        for (Product p: productList) {
+            allProducts.add(new ProductPanel(p));
+        }
+
+        /*Product mtnDew = new Product();
 		mtnDew.setName("Mountain Dew");
         mtnDew.setImagePath("images/mtndew.png");
 		mtnDew.setPrice(new Money(0.50));
@@ -63,7 +90,7 @@ public class ProductViewingPanel extends NavigablePanel implements ActionListene
 
 		allProducts.add(new ProductPanel(mtnDew));
 		allProducts.add(new ProductPanel(coke));
-		allProducts.add(new ProductPanel(bebopCola));
+		allProducts.add(new ProductPanel(bebopCola));  */
 		
 		for(int i = 1; i <= 2; i++) {
 			allProducts.add(new ProductPanel(new Product()));

@@ -1,5 +1,6 @@
 package gui;
 
+import vending.Money;
 import vending.Product;
 
 import javax.swing.*;
@@ -14,17 +15,11 @@ import java.awt.event.ActionListener;
  * Time: 6:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CustomProductPopup extends JDialog {
+public class CustomProductPopup {
 
     JPanel promptPanel = new JPanel();
 
     public CustomProductPopup() {
-        setSize(new Dimension(500, 400));
-
-
-
-
-        add(promptPanel);
 
     }
 
@@ -32,86 +27,108 @@ public class CustomProductPopup extends JDialog {
     public Product promptUserForInfo() {
         Product customProduct = new Product();
 
-        //setModalExclusionType(Dialog.ModalExclusionType.NO_EXCLUDE);
+        ProductDialog dialog = new ProductDialog(new JFrame());
 
-
-        //setVisible(true);
-        //setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        new SampleDialog(new JFrame()).show();
+        dialog.promptForProduct();
 
 
         return customProduct;
     }
 }
 
-class SampleDialog {
+class ProductDialog {
     private JFrame parentFrame;
     private JDialog dialog;
-    private JTextField field;
+    private JTextField descriptionField;
+    private JTextField priceField;
 
     private JButton okButton;
     private JButton cancelButton;
+    private static boolean isDone = false;
 
-    public SampleDialog(JFrame parentFrame) {
+    public ProductDialog(JFrame parentFrame) {
         this.parentFrame = parentFrame;
     }
 
     private void init() {
-        this.field = new JTextField();
+        okButton = new JButton("OK");
+        okButton.addActionListener(new OkButtonListener());
 
-        this.okButton = new JButton("OK");
-        this.okButton.addActionListener(new OkButtonListener());
-
-        this.cancelButton = new JButton("Cancel");
-        this.cancelButton.addActionListener(new ActionListener() {
+        cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent event) {
                 close();
             }
         });
 
-        this.dialog = new JDialog(this.parentFrame, "Sample", true);
-        this.dialog.getContentPane().add(createPane());
-        this.dialog.getRootPane().setDefaultButton(this.okButton);
-        this.dialog.pack();
-        this.dialog.setLocationRelativeTo(this.parentFrame);
+        dialog = new JDialog(parentFrame, "Custom Purchase", true);
+        dialog.getContentPane().add(createPane());
+        dialog.getRootPane().setDefaultButton(okButton);
+        dialog.pack();
+        dialog.setSize(new Dimension(400,150));
+        dialog.setLocationRelativeTo(parentFrame);
     }
 
     private Container createPane() {
-        JPanel topPanel = new JPanel(new FlowLayout());
-        topPanel.add(new Label("Something"));
-        topPanel.add(this.field);
+        descriptionField = new JTextField(15);
+        priceField = new JTextField(10);
+        priceField.setText("0.00");
+
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        topPanel.add(new FormRow(new Label("Description:"), descriptionField));
+        //topPanel.add(new Label("Description:"));
+        //topPanel.add(descriptionField);
+        topPanel.add(new FormRow(new Label("Price: $"), priceField));
+        //topPanel.add(new Label("Price: $"));
+        //topPanel.add(priceField);
 
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.LINE_AXIS));
         bottomPanel.add(Box.createHorizontalGlue());
-        bottomPanel.add(this.okButton);
+        bottomPanel.add(okButton);
         bottomPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        bottomPanel.add(this.cancelButton);
+        bottomPanel.add(cancelButton);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(9,9,9,9));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(9, 9, 9, 9));
         mainPanel.add(topPanel, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.PAGE_END);
+
         return mainPanel;
     }
 
-    public void show() {
-        if (this.dialog == null) {
+    public Product promptForProduct() {
+        if (dialog == null) {
             init();
         }
 
-        this.field.setText("Initial value");
 
-        this.dialog.show();
+        dialog.setVisible(true);
+
+        //while (dialog.isVisible()) {
+            //do nothing
+        //}
+
+        System.out.println(descriptionField.getText());
+        Product product = new Product();
+        product.setName(descriptionField.getText());
+        product.setPrice(new Money(new Double(priceField.getText())));
+
+        close();
+        return product;
+
     }
 
     private void close() {
-        this.dialog.hide();
+        dialog.setVisible(false);
     }
 
     private class OkButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent event) {
             // Do work
+            //close();
+            System.out.println(true);
             close();
         }
     }
