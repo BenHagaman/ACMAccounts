@@ -18,6 +18,10 @@ import java.awt.event.ActionListener;
 public class CustomProductPopup {
 
     JPanel promptPanel = new JPanel();
+    Product prod = new Product();
+
+    String product;
+    Money amount;
 
     public CustomProductPopup() {
 
@@ -29,8 +33,7 @@ public class CustomProductPopup {
 
         ProductDialog dialog = new ProductDialog(new JFrame());
 
-        dialog.promptForProduct();
-
+        customProduct = dialog.promptForProduct();
 
         return customProduct;
     }
@@ -41,6 +44,7 @@ class ProductDialog {
     private JDialog dialog;
     private JTextField descriptionField;
     private JTextField priceField;
+    private Product product = new Product();
 
     private JButton okButton;
     private JButton cancelButton;
@@ -106,15 +110,6 @@ class ProductDialog {
 
         dialog.setVisible(true);
 
-        //while (dialog.isVisible()) {
-            //do nothing
-        //}
-
-        System.out.println(descriptionField.getText());
-        Product product = new Product();
-        product.setName(descriptionField.getText());
-        product.setPrice(new Money(new Double(priceField.getText())));
-
         close();
         return product;
 
@@ -126,10 +121,21 @@ class ProductDialog {
 
     private class OkButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent event) {
-            // Do work
+            try{
+                if (new Double(priceField.getText()) < 0) {
+                    JOptionPane.showMessageDialog(dialog, "Price can not be negative");
+                } else if(new Double(priceField.getText()) > 100) {
+                    JOptionPane.showMessageDialog(dialog, "Price can not be over $100");
+                } else {
+                    product.setName(descriptionField.getText());
+                    product.setPrice(new Money(new Double(priceField.getText())));
+                    close();
+                }
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, priceField.getText() + " is not a valid dollar amount");
+            }
             //close();
-            System.out.println(true);
-            close();
         }
     }
 }

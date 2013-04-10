@@ -5,6 +5,11 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Scanner;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -17,6 +22,7 @@ import javax.swing.text.StyledDocument;
 
 import accounts.User;
 
+import db.JDBCConnection;
 import screentypes.MainScreen;
 import test.TestObjects;
 import vending.Controller;
@@ -30,10 +36,11 @@ import vending.UserSession;
  *
  * This panel is displayed as a "welcome screen"
  */
-public class LoginPanel extends JPanel implements ActionListener {
+public class LoginPanel extends JPanel implements ActionListener, KeyListener {
 
 	private final JButton newAcctButton = new JButton("New Account");
 	private final JButton loginButton = new JButton("Manual Login");
+    private StringBuilder cardReaderString = new StringBuilder("");
 
     /**
      * Constructs a LoginPanel and adds all of the necessary initial components and sub-panels
@@ -67,6 +74,10 @@ public class LoginPanel extends JPanel implements ActionListener {
         //Setup Buttons and set their listeners
 		loginButton.setAlignmentX(CENTER_ALIGNMENT);
 		newAcctButton.setAlignmentX(CENTER_ALIGNMENT);
+
+        textPane.setFocusable(false);
+        loginButton.setFocusable(false);
+        newAcctButton.setFocusable(false);
 		
 		newAcctButton.addActionListener(this);
 		loginButton.addActionListener(this);
@@ -77,7 +88,16 @@ public class LoginPanel extends JPanel implements ActionListener {
 		add(loginButton);
 		add(newAcctButton);
 
+        this.setFocusable(true);
+        //this.requestFocusInWindow();
+        //this.requestFocus();
+        //this.addKeyListener(this);
 	}
+
+    @Override
+    public boolean isFocusable() {
+        return true;
+    }
 
 
     /**
@@ -97,16 +117,49 @@ public class LoginPanel extends JPanel implements ActionListener {
 
 		} else if (event.getSource().equals(loginButton)){
 
-            //TODO: used for testing, remove!
-			if(TestObjects.globalUser == null) {
-				user = new User(" Mr. Super Long Name!", new Money(new Double("10.00")));
-			} else {
-				user = TestObjects.globalUser;
-			}
-
-			UserSession.startUserSession(user);
-			Controller.getController().logIn(UserSession.getCurrentSession());
+            ManualLoginPopup login = new ManualLoginPopup();
+            login.promptForCredentials();
 		}
 		
 	}
+
+
+    @Override
+    public void keyTyped(KeyEvent keyEvent) {
+        if (keyEvent.getKeyChar() == '\n'){
+            String cardno = cardReaderString.substring(0, cardReaderString.indexOf("="));
+            System.out.println(cardno);
+            cardReaderString = new StringBuilder("");
+
+            //TODO
+            //String query = "SELECT * FROM accounts WHERE card_number=" + cardno + ";";
+
+            ResultSet rs = JDBCConnection.getUsers(cardno);
+
+            try {
+                if(rs.next()) {
+
+                    User user = new User(rs.getString("username"), rs.getString("first_name"), rs.getString("last_name"), rs.getBigDecimal("card_number"), new Money(rs.getDouble("balance")));
+
+                    UserSession.startUserSession(user);
+                    Controller.getController().logIn(UserSession.getCurrentSession());
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+
+        } else {
+            cardReaderString.append(keyEvent.getKeyChar());
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent keyEvent) {
+        //do nothing
+    }
+
+    @Override
+    public void keyReleased(KeyEvent keyEvent) {
+        //do nothing
+    }
 }

@@ -4,14 +4,10 @@ package gui;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 
 import db.JDBCConnection;
@@ -42,16 +38,25 @@ public class ProductViewingPanel extends NavigablePanel implements ActionListene
             @Override
             public void actionPerformed(ActionEvent e) {
                 Product p = new CustomProductPopup().promptUserForInfo();
-                System.out.println("HERE");
-                System.out.println(p.getName());
-                System.out.println(p.getPrice());
-                JDBCConnection conn = new JDBCConnection();
+
+                int response = JOptionPane.showConfirmDialog(
+                        null,
+                        "Are you sure that you want to purchase " + p.getName() +
+                                " for " + p.getPrice().toString() + "?",
+                        "Confirm Purchase",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (response == JOptionPane.YES_OPTION) {
+                    UserSession.getCurrentSession().getUser().makePurchase(p);
+
+                    Controller.getController().updateBalance();
+                }
             }
         };
 
         allProducts.add(otherProductPanel);
 
-        ResultSet products = new JDBCConnection().execute("Select * FROM products;");
+        ResultSet products = JDBCConnection.query("Select * FROM products;");
         ArrayList<Product> productList = new ArrayList<Product>();
 
         try {
@@ -90,7 +95,7 @@ public class ProductViewingPanel extends NavigablePanel implements ActionListene
 
 		allProducts.add(new ProductPanel(mtnDew));
 		allProducts.add(new ProductPanel(coke));
-		allProducts.add(new ProductPanel(bebopCola));  */
+		allProducts.add(new ProductPanel(bebopCola));
 		
 		for(int i = 1; i <= 2; i++) {
 			allProducts.add(new ProductPanel(new Product()));
@@ -116,7 +121,7 @@ public class ProductViewingPanel extends NavigablePanel implements ActionListene
 
         for(ProductPanel productPanel: allProducts) {
             productPanel.addActionListener(this);
-        }
+        }      */
 
         setPage(1);
 	
@@ -187,7 +192,6 @@ public class ProductViewingPanel extends NavigablePanel implements ActionListene
             Product productPurchased = ((ProductPanel) event.getSource()).getProduct();
 
             if (event.getSource().equals(otherProduct)) {
-                System.out.println("OTHER MANG");
 
                 return;
             }

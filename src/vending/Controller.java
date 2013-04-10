@@ -1,11 +1,11 @@
 package vending;
+import db.JDBCConnection;
 import gui.MainPanel;
 import gui.VendingMenuBar;
 
 import java.awt.BorderLayout;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import screentypes.MainScreen;
 import screentypes.UserScreen;
@@ -70,8 +70,11 @@ public class Controller {
 
         //Add LoginPanel
 		loginPanel = new LoginPanel();
-		frame.getContentPane().add(loginPanel);
 		currentPanel = loginPanel;
+        frame.getContentPane().add(loginPanel);
+        loginPanel.setVisible(true);
+        loginPanel.requestFocusInWindow();
+        loginPanel.addKeyListener(loginPanel);
 
         //Display the login panel
         loginPanel.updateUI();
@@ -114,6 +117,9 @@ public class Controller {
 		mainFrame.add(loginPanel);
 		currentPanel = loginPanel;
 		currentScreen = MainScreen.LOGIN_SCREEN;
+        loginPanel.setVisible(true);
+        loginPanel.requestFocusInWindow();
+        loginPanel.addKeyListener(loginPanel);
 
         System.gc();
 	}
@@ -155,6 +161,20 @@ public class Controller {
 						currentPanel = loginPanel;
 						mainFrame.add(loginPanel);
 						currentScreen = newMainScreen;
+
+                        mainFrame.repaint();
+                        currentPanel.updateUI();
+
+                        loginPanel.setVisible(true);
+
+                        SwingUtilities.invokeLater(new Runnable(){
+                            @Override
+                            public void run() {
+                                loginPanel.addKeyListener(loginPanel);
+                                loginPanel.requestFocusInWindow();
+                                loginPanel.requestFocus();
+                            }});
+
 					}
 
 				} else if (screen == MainScreen.ACCOUNT_CREATION_SCREEN) {
@@ -163,13 +183,16 @@ public class Controller {
 					mainFrame.add(accountCreationPanel);
 					currentScreen = newMainScreen;
 
+                    mainFrame.repaint();
+                    currentPanel.updateUI();
+
 				} else if (screen == MainScreen.NAVIGATION_SCREEN && session != null) {
 					currentScreen = newMainScreen;
 
+                    mainFrame.repaint();
+                    currentPanel.updateUI();
+
 				}
-				
-				mainFrame.repaint();
-                currentPanel.updateUI();
 			}
 		}
 	}
@@ -225,6 +248,8 @@ public class Controller {
             mainFrame.setVisible(false);
             mainFrame.dispose();
         }
+
+        JDBCConnection.close();
 
 		System.exit(0);
 	}

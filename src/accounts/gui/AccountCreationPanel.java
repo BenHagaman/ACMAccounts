@@ -9,19 +9,15 @@ import java.awt.FlowLayout;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JEditorPane;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
+import javax.swing.*;
 
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
+import db.JDBCConnection;
 import gui.FormRow;
 import screentypes.MainScreen;
 import sql.UserQuery;
@@ -36,6 +32,7 @@ public class AccountCreationPanel extends JPanel implements ActionListener{
     //Buttons
 	JButton cancelButton = new JButton("Cancel");
 	JButton okButton = new JButton("OK");
+    JButton useCardReaderButton = new JButton("Enter using card reader...");
 	
     //Information Fields
 	TextField userName = new TextField();
@@ -45,6 +42,9 @@ public class AccountCreationPanel extends JPanel implements ActionListener{
 	TextField email = new TextField();
 	JPasswordField password = new JPasswordField();
 	JPasswordField passwordConfirmation = new JPasswordField();
+
+    Checkbox agreeCheckbox = new Checkbox("I agree to the terms and conditions",false);
+    Checkbox memberCheckbox = new Checkbox("ACM Member",false);
 
     /**
      * Creates a new AccountCreationPanel
@@ -79,18 +79,22 @@ public class AccountCreationPanel extends JPanel implements ActionListener{
 
 
 		add(new FormRow(firstNameField, lastNameField));
-		add(new FormField(new JLabel("Card Number: "), cardNumber));
+		add(new FormRow(new FormField(new JLabel("Card Number: "), cardNumber), useCardReaderButton));
 		add(new FormField(new JLabel("Username: "), userName));
-		add(new FormRow(new Checkbox("ACM Member",false)));
+		add(new FormRow(memberCheckbox));
 		add(emailField);
 		add(new FormRow(passwordField, passConfirmField));
 		add(textArea);
-		add(new FormRow(new Checkbox("I agree to the terms and conditions",false)));
+		add(new FormRow(agreeCheckbox));
 		add(new FormRow(okButton, cancelButton));
 
 		
 		cancelButton.addActionListener(this);
 		okButton.addActionListener(this);
+        useCardReaderButton.addActionListener(this);
+        cancelButton.setFocusable(false);
+        okButton.setFocusable(false);
+        useCardReaderButton.setFocusable(false);
 	}
 
 
@@ -139,24 +143,93 @@ public class AccountCreationPanel extends JPanel implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent event) {
 
-		if (event.getSource() == cancelButton) {
-			Controller.getController().navigateTo(MainScreen.LOGIN_SCREEN);
+        if (event.getSource() == useCardReaderButton) {
+            ReadCardNumberPopup cardReader = new ReadCardNumberPopup();
+            String cardNum = cardReader.promptUserForInfo();
+            if (cardNum != null) {
+                cardNumber.setText(cardNum);
+            }
 
+        } else if (event.getSource() == cancelButton) {
+			Controller.getController().navigateTo(MainScreen.LOGIN_SCREEN);
 
 		} else if (event.getSource() == okButton) {
-            //Create a user for the fields entered and save it to the DB
-			TestObjects.globalUser = 
-				new UserQuery(
-						userName.getText(),
-						cardNumber.getText(),
-						new String(password.getPassword()),
-						firstName.getText(),
-						lastName.getText(),
-						"20.00",
-						"1/23/1990 11:20:10.111",
-						"False"
-					).toUser();
-			Controller.getController().navigateTo(MainScreen.LOGIN_SCREEN);
+            int passLength = password.getPassword().length;
+
+            if (firstName.getText() == null || firstName.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "First name is required");
+            } else if (lastName.getText() == null || lastName.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "Last name is required");
+            } else if (cardNumber.getText() == null || cardNumber.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "Card number is required");
+            } else if (userName.getText() == null || userName.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "Username is required");
+            } else if (userName.getText().length() < 4) {
+                JOptionPane.showMessageDialog(this, "Username must be at least 4 characters");
+            } else if (email.getText() == null || email.getText().equals("")) {
+                JOptionPane.showMessageDialog(this, "Valid email is required");
+            } else if (passLength < 5) {
+                JOptionPane.showMessageDialog(this, "Password must be at least 5 characters");
+            } else if (passLength != passwordConfirmation.getPassword().length) {
+                JOptionPane.showMessageDialog(this, "The passwords much match");
+            } else if (new String(password.getPassword(), 0, passLength).equals(new String(passwordConfirmation.getPassword(), 0, passLength)) == false) {
+                JOptionPane.showMessageDialog(this, "The passwords must match");
+            } else if (agreeCheckbox.getState() == false) {
+                JOptionPane.showMessageDialog(this, "You must agree to the terms to continue");
+            } else {
+
+                try {
+                    BigDecimal cardNum = new BigDecimal(cardNumber.getText());
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Card Number must contain only numbers");
+                    return;
+                }
+
+                MessageDigest md;
+
+                try {
+                    md = MessageDigest.getInstance("MD5");
+
+                    md.update(new String(password.getPassword(), 0, passLength).getBytes());
+                    byte[] encodedPassword = md.digest();
+
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < encodedPassword.length; i++) {
+                        if ((encodedPassword[i] & 0xff) < 0x10) {
+                            sb.append("0");
+                        }
+                        sb.append(Long.toString(encodedPassword[i] & 0xff, 16));
+                    }
+
+                    String encryptedPassword = sb.toString();
+
+                    String query = "" +              //todo: not used to query, used to print out
+                            "INSERT INTO accounts " +
+                            "VALUES (" +cardNumber.getText() +
+                            ", '" + firstName.getText() +
+                            "', '" + lastName.getText() +
+                            "', '" + userName.getText() +
+                            "', '" + encryptedPassword +
+                            "', '" + email.getText() +
+                            "', " + 0.00 +
+                            ", " + memberCheckbox.getState() +
+                            ", " + true +
+                            ", NOW());";
+
+                    System.out.println(query);
+                    //JDBCConnection.update(query);
+                    try {
+                        JDBCConnection.createUser(firstName.getText(), lastName.getText(), cardNumber.getText(), userName.getText(), memberCheckbox.getState(), email.getText(), encryptedPassword);
+                        Controller.getController().navigateTo(MainScreen.LOGIN_SCREEN);
+                    } catch (MySQLIntegrityConstraintViolationException ex) {
+                        JOptionPane.showMessageDialog(this, "That card number or username is already in use");
+                    }
+
+                } catch (NoSuchAlgorithmException ex) {
+                    System.err.println("encryption error");
+                }
+
+            }
 		}
 	}
 

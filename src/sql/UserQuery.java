@@ -38,7 +38,7 @@ public class UserQuery {
 	}
 	
 	public User toUser() {
-		return new User(firstName + " " + lastName, new Money(new Double(balance)));
+		return new User(userName, firstName, lastName, new BigDecimal(cardNumber) ,new Money(new Double(balance)));
 	}
 	
 }

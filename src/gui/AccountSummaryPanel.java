@@ -36,12 +36,12 @@ public class AccountSummaryPanel extends JPanel implements ActionListener{
 		
 		setOpaque(false);
 		
-		nameComponent.setText(user.getUserName());
+		nameComponent.setText(" " + user.getFirstName() + " " + user.getLastName());
 		nameComponent.setFont(new Font("FontName", Font.BOLD, 26));
 		
 		add(nameComponent);
 
-		balanceComponent.setText("Balance: " + user.getBalance().toString());
+		balanceComponent.setText(" Balance: " + user.getBalance().toString());
 		balanceComponent.setForeground(user.getBalance().isNegative() ? darkRed : darkGreen);
 		balanceComponent.setFont(new Font("FontName", Font.BOLD, 26));
 		balanceComponent.setEditable(false);
@@ -62,7 +62,7 @@ public class AccountSummaryPanel extends JPanel implements ActionListener{
      * Updates the balance being displayed for the user
      */
     public void updateBalance() {
-        balanceComponent.setText("Balance: " + user.getBalance().toString());
+        balanceComponent.setText(" Balance: " + user.getBalance().toString());
         balanceComponent.setForeground(user.getBalance().isNegative() ? darkRed : darkGreen);
 
         updateUI();

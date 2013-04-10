@@ -96,7 +96,21 @@ public class AddMoneyPanel extends PanelWithTitle implements ActionListener {
             System.out.println("WHAT!!? 9000? THERE'S NO WAY THAT CAN BE RIGHT!!");
 
         } else if (event.getSource() == addOtherAmt) {
-            System.out.println("Yes me lord");
+            String amount = JOptionPane.showInputDialog("Please enter the amount in dollars (eg. 1.25 with no \'$\')");
+
+            try {
+                Double d = new Double(amount);
+                if (d < 0.01) {
+                    JOptionPane.showMessageDialog(this, "Amount must be at least $0.01");
+                } else if (d > 100) {
+                    JOptionPane.showMessageDialog(this, "Amount can not exceed $100");
+                } else {
+                    moneyToAdd = new Money(d);
+                }
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "\'" + amount + "\' is not a valid dollar amount");
+            }
 
         }
 
